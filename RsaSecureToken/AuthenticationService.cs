@@ -7,16 +7,18 @@ namespace RsaSecureToken
     {
         private IProfile _profile;
         private IToken _token;
+        private ILogger _logger;
 
         public AuthenticationService()
         {
             _profile = new Profile();
             _token = new Token();
         }
-        public AuthenticationService(IProfile profile, IToken token)
+        public AuthenticationService(IProfile profile, IToken token,ILogger logger)
         {
             _profile = profile;
             _token = token;
+            _logger = logger;
         }
 
         public bool IsValid(string account, string password)
@@ -37,11 +39,16 @@ namespace RsaSecureToken
             }
             else
             {
+                _logger.Save(string.Format("account:{0} try to login failed.",account));
                 return false;
             }
         }
-    }
 
+    }
+    public interface ILogger
+    {
+        void Save(string message);
+    }
     public interface IProfile
     {
         string GetPassword(string account);
