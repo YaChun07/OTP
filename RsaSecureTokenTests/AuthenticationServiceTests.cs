@@ -6,116 +6,81 @@ namespace RsaSecureToken.Tests
     [TestClass]
     public class AuthenticationServiceTests
     {
+        private IProfile _fakeProfile = Substitute.For<IProfile>();
+        private IToken _fakeToken = Substitute.For<IToken>();
+        private ILogger _fakeLogger = Substitute.For<ILogger>();
+        private AuthenticationService _authenticationService;
+
+        [TestInitialize]
+        public void SetUp()
+        {
+            _authenticationService = new AuthenticationService(_fakeProfile, _fakeToken, _fakeLogger);
+        }
+
         [TestMethod]
         public void IsValidTest()
         {
-            //var profile = new FakeProfile();
-            //var token = new FakeToken();
-
-            var fakeProfile = Substitute.For<IProfile>();
-            fakeProfile.GetPassword("joey").Returns("91");
-
-            var fakeToken = Substitute.For<IToken>();
-            fakeToken.GetRandom("").ReturnsForAnyArgs("000000");
-
-            var fakeLogger = Substitute.For<ILogger>();
-            //var target = new AuthenticationService(profile, token);
-            var target = new AuthenticationService(fakeProfile, fakeToken, fakeLogger);
-
-            var actual = target.IsValid("joey", "91000000");
-
-            Assert.IsTrue(actual);
+            GetPassword("joey", "91");
+            GetRandom("000000");
+            ShouldValid("joey", "91000000");
         }
-
 
         [TestMethod]
         public void IsInvalid()
         {
-            var fakeProfile = Substitute.For<IProfile>();
-            fakeProfile.GetPassword("joey").Returns("91");
-
-            var fakeToken = Substitute.For<IToken>();
-            fakeToken.GetRandom("").ReturnsForAnyArgs("000000");
-
-            var fakeLogger = Substitute.For<ILogger>();
-            var target = new AuthenticationService(fakeProfile, fakeToken, fakeLogger);
-
-            var actual = target.IsValid("joey", "Wrong Password");
-
-            Assert.IsFalse(actual);
+            GetPassword("joey", "91");
+            GetRandom("000000");
+            ShouldInvalid("joey", "Wrong Password");
         }
 
         [TestMethod]
         public void ShouldCallLogSaveOnce()
         {
-            var fakeProfile = Substitute.For<IProfile>();
-            fakeProfile.GetPassword("joey").Returns("91");
+            GetPassword("joey", "91");
+            GetRandom("000000");
+            ShouldInvalid("joey", "Wrong Password");
 
-            var fakeToken = Substitute.For<IToken>();
-            fakeToken.GetRandom("").ReturnsForAnyArgs("000000");
-
-            var fakeLogger = Substitute.For<ILogger>();
-            var target = new AuthenticationService(fakeProfile, fakeToken, fakeLogger);
-
-            target.IsValid("joey", "Wrong Password");
-
-            fakeLogger.Received(1);
+            _fakeLogger.Received(1);
         }
 
         [TestMethod]
         public void ShouldCallLogSaveOnce_returnAccount()
         {
-            var fakeProfile = Substitute.For<IProfile>();
-            fakeProfile.GetPassword("joey").Returns("91");
+            GetPassword("joey", "91");
+            GetRandom("000000");
+            ShouldInvalid("joey", "Wrong Password");
 
-            var fakeToken = Substitute.For<IToken>();
-            fakeToken.GetRandom("").ReturnsForAnyArgs("000000");
-
-            var fakeLogger = Substitute.For<ILogger>();
-            var target = new AuthenticationService(fakeProfile, fakeToken, fakeLogger);
-
-            target.IsValid("joey", "Wrong Password");
-
-            fakeLogger.Received(1).Save(Arg.Is<string>(x=>x.Contains("joey") && x.Contains("login failed")));
+            _fakeLogger.Received(1).Save(Arg.Is<string>(x => x.Contains("joey") && x.Contains("login failed")));
         }
 
         [TestMethod]
         public void Should_not_log_when_valid()
         {
-            var fakeProfile = Substitute.For<IProfile>();
-            fakeProfile.GetPassword("joey").Returns("91");
+            GetPassword("joey", "91");
+            GetRandom("000000");
+            ShouldValid("joey", "91000000");
 
-            var fakeToken = Substitute.For<IToken>();
-            fakeToken.GetRandom("").ReturnsForAnyArgs("000000");
-
-            var fakeLogger = Substitute.For<ILogger>();
-            var target = new AuthenticationService(fakeProfile, fakeToken, fakeLogger);
-
-            target.IsValid("joey", "91000000");
-            fakeLogger.DidNotReceiveWithAnyArgs().Save("");
+            _fakeLogger.DidNotReceiveWithAnyArgs().Save("");
         }
-      
-            
-        
+
+        private void ShouldValid(string account, string password)
+        {
+            Assert.IsTrue(_authenticationService.IsValid(account, password));
+        }
+
+        private void GetRandom(string randomNum)
+        {
+            _fakeToken.GetRandom("").ReturnsForAnyArgs(randomNum);
+        }
+
+        private void GetPassword(string account, string password)
+        {
+            _fakeProfile.GetPassword(account).Returns(password);
+        }
+
+        private void ShouldInvalid(string account, string wrongPassword)
+        {
+            Assert.IsFalse(_authenticationService.IsValid(account, wrongPassword));
+        }
     }
-
-    //public class FakeProfile : IProfile
-    //{
-    //    public string GetPassword(string account)
-    //    {
-    //        if (account == "joey")
-    //        {
-    //            return "91";
-    //        }
-    //        return "";
-    //    }
-    //}
-
-    //public class FakeToken : IToken
-    //{
-    //    public string GetRandom(string account)
-    //    {
-    //        return "000000";
-    //    }
-    //}
 }
