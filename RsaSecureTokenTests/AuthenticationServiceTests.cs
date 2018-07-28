@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using RsaSecureToken;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NSubstitute;
+
 namespace RsaSecureToken.Tests
 {
     [TestClass()]
@@ -13,32 +15,41 @@ namespace RsaSecureToken.Tests
         [TestMethod()]
         public void IsValidTest()
         {
-            var target = new AuthenticationService(new FakeProfile(), new FakeToken());
+            //var profile = new FakeProfile();
+            //var token = new FakeToken();
+
+            var fakeProfile = Substitute.For<IProfile>();
+            fakeProfile.GetPassword("joey").Returns("91");
+
+            var fakeToken = Substitute.For<IToken>();
+            fakeToken.GetRandom("").ReturnsForAnyArgs("000000");
+
+            //var target = new AuthenticationService(profile, token);
+            var target = new AuthenticationService(fakeProfile, fakeToken);
 
             var actual = target.IsValid("joey", "91000000");
 
-            //always failed
-            Assert.IsTrue(actual);                       
+            Assert.IsTrue(actual);
         }
     }
 
-    public class FakeProfile:IProfile
-    {
-        public string GetPassword(string account)
-        {
-            if (account == "joey")
-            {
-                return "91";
-            }
-          return "";
-        }
-    }
+    //public class FakeProfile : IProfile
+    //{
+    //    public string GetPassword(string account)
+    //    {
+    //        if (account == "joey")
+    //        {
+    //            return "91";
+    //        }
+    //        return "";
+    //    }
+    //}
 
-    public class FakeToken : IToken
-    {
-        public string GetRandom(string account)
-        {
-            return "000000";
-        }
-    }
+    //public class FakeToken : IToken
+    //{
+    //    public string GetRandom(string account)
+    //    {
+    //        return "000000";
+    //    }
+    //}
 }
